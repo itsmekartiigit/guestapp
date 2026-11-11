@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#410015"/>
+      <stop offset="100%" stop-color="#1f000a"/>
+    </linearGradient>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF1735"/>
+      <stop offset="100%" stop-color="#B91C1C"/>
+    </linearGradient>
+  </defs>
+  <!-- Background with subtle rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  
+  <!-- Outer Gold/Rose Ring -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#EF1735" stroke-width="6" opacity="0.4"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.2"/>
+
+  <!-- ON AIR text and signal waves -->
+  <g transform="translate(70, 180)">
+    <!-- O N -->
+    <text x="30" y="80" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="78" fill="#FFFFFF" letter-spacing="2">ON</text>
+    
+    <!-- AIR with waves -->
+    <text x="180" y="80" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="78" fill="#FFFFFF" letter-spacing="2">AIR</text>
+    
+    <!-- Signal arcs above AIR -->
+    <path d="M 330 35 A 24 24 0 0 1 346 52" fill="none" stroke="#EF1735" stroke-width="8" stroke-linecap="round"/>
+    <path d="M 330 20 A 40 40 0 0 1 360 48" fill="none" stroke="#EF1735" stroke-width="8" stroke-linecap="round"/>
+    <path d="M 330 5 A 56 56 0 0 1 374 44" fill="none" stroke="#EF1735" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Subtitle: Wedding Stories -->
+  <text x="256" y="310" text-anchor="middle" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="500" font-size="28" fill="#FFFFFF" letter-spacing="4" opacity="0.9">WEDDING STORIES</text>
+
+  <!-- Little Red Recording Dot -->
+  <circle cx="256" cy="370" r="14" fill="url(#redGrad)"/>
+  <circle cx="256" cy="370" r="24" fill="none" stroke="#EF1735" stroke-width="3" opacity="0.6"/>
+</svg>

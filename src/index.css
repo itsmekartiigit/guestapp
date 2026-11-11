@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --primary: #EF1735;
+    --maroon-dark: #410015;
+    --maroon-secondary: #790020;
+    --light-pink: #FFF0F3;
+    --bg-page: #FFFDFE;
+    --text-primary: #171717;
+    --text-secondary: #77727A;
+    --border-color: #F0E6E9;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #0d0608;
+    color: #171717;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+.font-script {
+  font-family: 'Great Vibes', cursive;
+}
+
+.font-display {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Hide scrollbars for slick app-like feel while retaining scrollability */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Pulsing radar scan effect for AI selfie finder */
+@keyframes radar-scan {
+  0% {
+    top: 0%;
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0.8;
+  }
+}
+
+.animate-radar-scan {
+  animation: radar-scan 2.4s ease-in-out infinite alternate;
+}
+
+.video-player-viewport {
+  height: 100vh;
+  height: 100dvh;
+  padding-top: max(env(safe-area-inset-top), 0.75rem);
+  padding-right: max(env(safe-area-inset-right), 0.75rem);
+  padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+  padding-left: max(env(safe-area-inset-left), 0.75rem);
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .video-player-viewport {
+    padding-top: max(env(safe-area-inset-top), 0.4rem);
+    padding-bottom: max(env(safe-area-inset-bottom), 0.4rem);
+  }
+
+  .video-player-header {
+    padding-bottom: 0.25rem;
+  }
+
+  .video-player-controls {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Subtle decorative blossoms on the guest PIN screen. */
+.guest-flower-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.guest-flower {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  opacity: 0.38;
+  animation: guest-flower-float 7s ease-in-out infinite;
+}
+
+.guest-flower span {
+  position: absolute;
+  left: 13px;
+  top: 1px;
+  width: 8px;
+  height: 14px;
+  border-radius: 70% 70% 55% 55%;
+  background: linear-gradient(180deg, #f5a3b2, #ef1735);
+  transform-origin: 4px 16px;
+}
+
+.guest-flower span:nth-child(1) { transform: rotate(0deg); }
+.guest-flower span:nth-child(2) { transform: rotate(72deg); }
+.guest-flower span:nth-child(3) { transform: rotate(144deg); }
+.guest-flower span:nth-child(4) { transform: rotate(216deg); }
+.guest-flower span:nth-child(5) { transform: rotate(288deg); }
+
+.guest-flower i {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f7d77c;
+}
+
+.guest-flower-one {
+  top: 38%;
+  left: 8%;
+  animation-delay: -1.2s;
+}
+
+.guest-flower-two {
+  top: 55%;
+  right: 8%;
+  transform: scale(0.78);
+  animation-delay: -4s;
+}
+
+.guest-flower-three {
+  bottom: 17%;
+  left: 22%;
+  transform: scale(0.65);
+  animation-delay: -2.6s;
+}
+
+.guest-flower-four {
+  right: 24%;
+  bottom: 9%;
+  transform: scale(0.9);
+  animation-delay: -5.3s;
+}
+
+@keyframes guest-flower-float {
+  0%, 100% { translate: 0 0; rotate: -8deg; }
+  50% { translate: 0 -12px; rotate: 10deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guest-flower {
+    animation: none;
+  }
+}

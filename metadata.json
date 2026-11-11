@@ -1,0 +1,6 @@
+{
+  "name": "ON AIR – Wedding Stories",
+  "description": "Mobile-first wedding guest PWA with live streaming, AI selfie photo matching, albums, schedules, and wishes.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

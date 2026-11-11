@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <script>
+      // Suppress Vite HMR WebSocket disconnection errors and media decode fallback notices in sandbox iframe environment
+      window.addEventListener('error', function(e) {
+        const msg = e.message || '';
+        if (msg.includes('WebSocket') || msg.includes('supported sources') || msg.includes('MEDIA_ELEMENT_ERROR') || e.filename?.includes('@vite/client')) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return true;
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function(e) {
+        const msg = e.reason?.message || String(e.reason || '');
+        if (msg.includes('WebSocket') || msg.includes('supported sources')) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        }
+      });
+    </script>
+    <title>ON AIR – Wedding Stories</title>
+    <meta name="description" content="Mobile-first wedding guest PWA with live streaming, AI selfie photo matching, albums, schedules, and wishes." />
+    <meta property="og:title" content="ON AIR – Wedding Stories" />
+    <meta property="og:description" content="Mobile-first wedding guest PWA with live streaming, AI selfie photo matching, albums, schedules, and wishes." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0a0a0d" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ON AIR" />
+    <link rel="icon" type="image/png" href="/app-icon.png" />
+    <link rel="shortcut icon" href="/app-icon.png" />
+    <link rel="apple-touch-icon" href="/app-icon.png" />
+    <link rel="apple-touch-startup-image" href="/splash.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-[#120a0d] text-[#171717] antialiased select-none selection:bg-[#EF1735]/20 selection:text-[#EF1735]">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
