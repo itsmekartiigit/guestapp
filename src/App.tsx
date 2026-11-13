@@ -93,7 +93,7 @@ export default function App() {
 
   useEffect(() => {
     if (!guestEventSlug) return undefined;
-    setWedding(initialWeddingEvent);
+    setWedding({ ...initialWeddingEvent, isLive: false, liveStreamStatus: 'offline', liveStreamUrl: '' });
     setMatchedPhotos([]);
     setGuestSelfieUrl(null);
     const unsubscribeEvent = onSnapshot(
@@ -297,10 +297,10 @@ const handleEnterEvent = async (pin: string, name?: string) => {
               )}
 
               {currentView === 'live-stream' && (
-                <LiveStreamScreen wedding={wedding} onBack={handleBack} />
+                <LiveStreamScreen wedding={wedding} eventSlug={guestEventSlug} guestName={guestName} />
               )}
 
-              {currentView === 'schedule' && <EventScheduleScreen />}
+              {currentView === 'schedule' && <EventScheduleScreen wedding={wedding} />}
 
               {currentView === 'venue' && <VenueScreen wedding={wedding} />}
 

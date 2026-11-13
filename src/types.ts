@@ -24,6 +24,8 @@ export interface WeddingEvent {
   studioName: string;
   studioLogoUrl?: string;
   isLive: boolean;
+  liveStreamStatus?: 'online' | 'offline' | 'scheduled' | 'completed' | 'live' | 'upcoming';
+  liveStreamScheduledAt?: string;
   liveViewersCount: number;
   liveStreamUrl: string;
   trailerTitle: string;
@@ -33,6 +35,7 @@ export interface WeddingEvent {
   trailerVideoUrl: string;
   photoAlbums?: PhotoAlbum[];
   videoAlbums?: VideoAlbum[];
+  schedules?: Array<{ id: string; name: string; date: string; startTime: string; endTime: string; isCurrent: boolean }>;
 }
 
 export interface PhotoAlbum {

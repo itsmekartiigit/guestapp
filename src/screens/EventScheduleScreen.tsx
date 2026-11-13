@@ -1,10 +1,17 @@
 import React from 'react';
-import { initialScheduleEvents } from '../data/weddingData';
+import { WeddingEvent } from '../types';
 import { FiClock, FiMapPin, FiCalendar, FiCheckCircle } from 'react-icons/fi';
 import { MdLiveTv } from 'react-icons/md';
 
-export const EventScheduleScreen: React.FC = () => {
-  const events = initialScheduleEvents;
+export const EventScheduleScreen: React.FC<{ wedding: WeddingEvent }> = ({ wedding }) => {
+  const events = (wedding.schedules ?? []).map((schedule) => ({
+    id: schedule.id,
+    name: schedule.name,
+    date: new Date(`${schedule.date}T00:00:00`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    time: `${schedule.startTime} – ${schedule.endTime}`,
+    location: wedding.venueName,
+    status: schedule.isCurrent ? 'live' as const : 'upcoming' as const,
+  }));
 
   return (
     <div className="pb-24 animate-in fade-in duration-300">
@@ -17,7 +24,11 @@ export const EventScheduleScreen: React.FC = () => {
       <div className="p-4">
         {/* Timeline */}
         <div className="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-[#F0E6E9]">
-          {events.map((evt) => {
+          {events.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#E7DDE1] bg-white p-6 text-center text-sm text-[#77727A]">
+              The event schedule will be shared here soon.
+            </div>
+          ) : events.map((evt) => {
             const isLive = evt.status === 'live';
             const isCompleted = evt.status === 'completed';
 
@@ -54,7 +65,7 @@ export const EventScheduleScreen: React.FC = () => {
                     <h3 className="text-sm font-bold text-[#171717]">{evt.name}</h3>
                     {isLive && (
                       <span className="flex items-center gap-1 text-[10px] font-black uppercase text-white bg-[#EF1735] px-2 py-0.5 rounded-full shadow-xs">
-                        <MdLiveTv className="text-xs" /> NOW LIVE
+                        <MdLiveTv className="text-xs" /> CURRENT
                       </span>
                     )}
                     {isCompleted && (
