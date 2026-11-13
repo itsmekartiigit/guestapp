@@ -65,6 +65,7 @@ export const LiveStreamScreen: React.FC<LiveStreamScreenProps> = ({ wedding, eve
   const [playbackError, setPlaybackError] = useState('');
   const [videoReady, setVideoReady] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [manualPlayRequired, setManualPlayRequired] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -155,48 +156,162 @@ export const LiveStreamScreen: React.FC<LiveStreamScreenProps> = ({ wedding, eve
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !playbackUrl || status !== 'online') return;
+
     let hls: Hls | null = null;
+    let cancelled = false;
+    let mediaRecoveryAttempts = 0;
+
     setVideoReady(false);
     setVideoPlaying(false);
+    setManualPlayRequired(false);
+    setPlaybackError('');
 
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = playbackUrl;
-    } else if (Hls.isSupported()) {
-      hls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 30 });
-      hls.attachMedia(video);
+    const startPlayback = async () => {
+      if (cancelled) return;
+      try {
+        video.muted = true;
+        video.playsInline = true;
+        await video.play();
+        if (!cancelled) {
+          setVideoPlaying(true);
+          setManualPlayRequired(false);
+          setPlaybackError('');
+        }
+      } catch (error) {
+        if (cancelled) return;
+        console.info('Guest video autoplay requires a user gesture:', error);
+        setManualPlayRequired(true);
+        setPlaybackError('Tap the play button to start the live broadcast.');
+      }
+    };
+
+    const handleNativeError = () => {
+      if (cancelled) return;
+      const mediaError = video.error;
+      const source = video.currentSrc;
+      console.error('Guest native HLS video error:', {
+        code: mediaError?.code,
+        message: mediaError?.message,
+        currentSrc: source ? source.split('?')[0] : '',
+        networkState: video.networkState,
+        readyState: video.readyState,
+      });
+      setVideoPlaying(false);
+      setPlaybackError(mediaError?.code === MediaError.MEDIA_ERR_DECODE
+        ? 'The browser received the live stream but could not decode the video. Check the encoder video/audio codecs.'
+        : mediaError?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
+          ? 'This browser cannot decode the live stream format.'
+          : 'The live video could not be loaded. Please retry.');
+    };
+
+    video.addEventListener('error', handleNativeError);
+
+    if (Hls.isSupported()) {
+      console.info('Using HLS.js for Mux playback');
+      hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 30,
+        maxBufferLength: 30,
+        manifestLoadingMaxRetry: 4,
+        levelLoadingMaxRetry: 4,
+        fragLoadingMaxRetry: 4,
+      });
+
+      hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+        if (!cancelled) hls?.loadSource(playbackUrl);
+      });
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (cancelled) return;
+        console.info('Mux HLS manifest parsed successfully');
+        setVideoReady(true);
+        setPlaybackError('');
+        void startPlayback();
+      });
+
       hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (cancelled) return;
         const httpStatus = data.response?.code;
-        console.warn('Guest Mux HLS playback error:', {
+        const requestUrl = data.url;
+        console.error('Mux HLS error:', {
           type: data.type,
           details: data.details,
           fatal: data.fatal,
-          httpStatus,
+          status: httpStatus,
+          reason: data.reason,
+          url: requestUrl ? requestUrl.split('?')[0] : undefined,
         });
+
         if (httpStatus === 401 || httpStatus === 403) {
-          setPlaybackError('Mux rejected the signed playback URL. Refresh the stream and try again.');
+          setPlaybackError('Mux rejected the signed playback URL. Please refresh the live video.');
+          setManualPlayRequired(false);
           return;
         }
+
         if (httpStatus === 404) {
-          setPlaybackError('Mux has not published a playable video segment yet. Please retry shortly.');
+          setPlaybackError('Mux has not published this live video segment yet. Please retry shortly.');
           return;
         }
-        if (!data.fatal) return;
-        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls?.startLoad();
-        else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls?.recoverMediaError();
-        else setPlaybackError('The live video could not be played. Please refresh and try again.');
+
+        if (!data.fatal || cancelled) return;
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          hls?.startLoad();
+          return;
+        }
+        if (data.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 2) {
+          mediaRecoveryAttempts += 1;
+          hls?.recoverMediaError();
+          return;
+        }
+        setVideoPlaying(false);
+        setPlaybackError(`Live playback failed (${data.details}). Tap retry to reconnect.`);
       });
-      hls.loadSource(playbackUrl);
+
+      hls.attachMedia(video);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      console.info('Using native HLS playback');
+      const handleNativeMetadata = () => {
+        if (cancelled) return;
+        setVideoReady(true);
+        void startPlayback();
+      };
+      video.addEventListener('loadedmetadata', handleNativeMetadata, { once: true });
+      video.src = playbackUrl;
+      video.load();
     } else {
-      setPlaybackError('This browser cannot play the live video. Please open this page in an up-to-date browser.');
+      setPlaybackError('This browser cannot play HLS video. Please use an up-to-date Chrome, Edge or Safari browser.');
     }
 
     return () => {
+      cancelled = true;
+      video.removeEventListener('error', handleNativeError);
       if (hls) hls.destroy();
       video.pause();
       video.removeAttribute('src');
       video.load();
     };
   }, [playbackUrl, status]);
+
+  const handleRetryVideo = () => {
+    setPlaybackError('');
+    setManualPlayRequired(false);
+    setVideoReady(false);
+    void refreshPlayback();
+  };
+
+  const handleManualPlay = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      await video.play();
+      setManualPlayRequired(false);
+      setPlaybackError('');
+    } catch (error) {
+      console.error('Guest manual playback failed:', error);
+      setPlaybackError('Playback is not ready yet. Please retry in a moment.');
+    }
+  };
 
   const statusStyles: Record<StreamStatus, string> = {
     online: 'bg-rose-600 text-white',
@@ -251,19 +366,35 @@ export const LiveStreamScreen: React.FC<LiveStreamScreenProps> = ({ wedding, eve
                 <video
                   ref={videoRef}
                   playsInline
+                  autoPlay
+                  muted
                   controls
                   preload="auto"
                   className="h-full w-full bg-black object-contain"
+                  onLoadedMetadata={() => setVideoReady(true)}
                   onCanPlay={() => setVideoReady(true)}
-                  onLoadedData={() => setVideoReady(true)}
+                  onPlaying={() => { setVideoReady(true); setVideoPlaying(true); setManualPlayRequired(false); setPlaybackError(''); }}
                   onPlay={() => setVideoPlaying(true)}
-                  onPlaying={() => { setVideoReady(true); setVideoPlaying(true); setPlaybackError(''); }}
                   onPause={() => setVideoPlaying(false)}
-                  onError={() => setPlaybackError('The live video could not be loaded. Please retry in a moment.')}
                   aria-label={`Live wedding broadcast for ${wedding.title}`}
                 />
-                {!videoPlaying && videoReady && <button type="button" onClick={() => { void videoRef.current?.play().catch(() => setPlaybackError('Tap play again when the live video is ready.')); }} className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/35 text-white" aria-label="Play live broadcast"><span className="rounded-full bg-rose-600 px-5 py-3 text-sm font-bold shadow-lg">▶ Play live broadcast</span></button>}
-                {!videoPlaying && !videoReady && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/35 text-white" role="status" aria-live="polite"><span className="h-9 w-9 animate-spin rounded-full border-4 border-white/30 border-t-white" /><span className="rounded-full bg-black/70 px-4 py-2 text-xs font-bold">Preparing live video…</span></div>}
+                {!videoReady && !playbackError && (
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/35 text-white" role="status" aria-live="polite">
+                    <span className="h-9 w-9 animate-spin rounded-full border-4 border-white/30 border-t-white" />
+                    <span className="rounded-full bg-black/70 px-4 py-2 text-xs font-bold">Preparing live video…</span>
+                  </div>
+                )}
+                {manualPlayRequired && (
+                  <button type="button" onClick={() => void handleManualPlay()} className="absolute inset-0 flex items-center justify-center bg-black/30 text-white" aria-label="Play live broadcast">
+                    <span className="rounded-full bg-rose-600 px-5 py-3 text-sm font-bold shadow-lg">▶ Play live broadcast</span>
+                  </button>
+                )}
+                {playbackError && (
+                  <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-xl bg-black/85 p-3 text-xs text-amber-200" role="status" aria-live="polite">
+                    <span className="min-w-0">{playbackError}</span>
+                    <button type="button" onClick={handleRetryVideo} className="shrink-0 rounded-lg bg-rose-600 px-3 py-2 font-bold text-white">Retry</button>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex h-full flex-col items-center justify-center px-8 text-center text-white">
@@ -273,7 +404,6 @@ export const LiveStreamScreen: React.FC<LiveStreamScreenProps> = ({ wedding, eve
                 {!playbackLoading && <button type="button" onClick={() => void refreshPlayback()} className="mt-4 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700">Retry video</button>}
               </div>
             )}
-            {playbackError && playbackUrl && <p role="status" className="absolute bottom-3 left-3 right-3 rounded-lg bg-black/80 p-2 text-center text-xs text-amber-200">{playbackError}</p>}
           </>
         ) : (
           <div className="flex h-full flex-col items-center justify-center px-8 text-center text-white">
